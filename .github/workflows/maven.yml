@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**.java'
+      - 'pom.xml'
   pull_request:
     branches:
       - main
@@ -16,6 +19,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
@@ -24,3 +35,10 @@ jobs:
 
     - name: Build and Test with Maven
       run: mvn clean install
+
+    - name: Archive test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: target/surefire-reports/
